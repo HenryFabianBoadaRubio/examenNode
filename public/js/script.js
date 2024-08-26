@@ -298,6 +298,8 @@ class EncriptadorMensaje extends HTMLElement {
       
       this.shadowRoot.querySelector('#myForm').addEventListener('submit', this.handleSubmit.bind(this));
       this.shadowRoot.querySelector('#copy').addEventListener('click', this.handleCopy.bind(this));
+
+      this.errorContainer = this.shadowRoot.querySelector('.form-input__menssage');
     }
   
     async handleSubmit(event) {
@@ -309,6 +311,8 @@ class EncriptadorMensaje extends HTMLElement {
       const copySection = this.shadowRoot.querySelector('.form-ouput__menssage');
       const copyParagraph = this.shadowRoot.querySelector('.form-ouput__menssage p');
   
+
+      this.clearErrorMessage();
       try {
         let result;
         if (btn === 'encrypt') {
@@ -322,7 +326,7 @@ class EncriptadorMensaje extends HTMLElement {
         copyParagraph.innerHTML = result;
       } catch (error) {
         console.error('Error:', error);
-        
+        this.showErrorMessage(error.message);
       }
     }
     async encryptText(text) {
@@ -333,6 +337,10 @@ class EncriptadorMensaje extends HTMLElement {
         },
         body: JSON.stringify({ text }),
       });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
       const data = await response.json();
       return data.result;
     }
@@ -345,8 +353,27 @@ class EncriptadorMensaje extends HTMLElement {
         },
         body: JSON.stringify({ text }),
       });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
       const data = await response.json();
       return data.result;
+    }
+
+    showErrorMessage(message) {
+      // Crear y mostrar el mensaje de error
+      const errorElement = document.createElement('small');
+      errorElement.textContent = message;
+      errorElement.style.color = 'red';
+      this.errorContainer.appendChild(errorElement);
+    }
+  
+    clearErrorMessage() {
+      // Limpiar mensajes de error previos
+      while (this.errorContainer.lastChild) {
+        this.errorContainer.removeChild(this.errorContainer.lastChild);
+      }
     }
     handleCopy() {
       const text = this.shadowRoot.querySelector('.form-ouput__menssage p').textContent;
