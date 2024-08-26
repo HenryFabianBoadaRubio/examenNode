@@ -2,10 +2,10 @@ class EncriptadorMensaje extends HTMLElement {
     constructor() {
       super();
   
-      // Crear el shadow DOM
+   
       const shadow = this.attachShadow({ mode: 'open' });
   
-      // Definir el template
+      
       const template = document.createElement('template');
       template.innerHTML = `
         <style>
@@ -295,12 +295,12 @@ class EncriptadorMensaje extends HTMLElement {
       // Agregar el template al shadow DOM
       shadow.appendChild(template.content.cloneNode(true));
   
-      // Agregar eventos
+      
       this.shadowRoot.querySelector('#myForm').addEventListener('submit', this.handleSubmit.bind(this));
       this.shadowRoot.querySelector('#copy').addEventListener('click', this.handleCopy.bind(this));
     }
   
-    handleSubmit(event) {
+    async handleSubmit(event) {
       event.preventDefault();
       const btn = event.submitter.dataset.action;
       const data = Object.fromEntries(new FormData(event.target));
@@ -309,17 +309,45 @@ class EncriptadorMensaje extends HTMLElement {
       const copySection = this.shadowRoot.querySelector('.form-ouput__menssage');
       const copyParagraph = this.shadowRoot.querySelector('.form-ouput__menssage p');
   
-      if (btn === 'encrypt') {
+      try {
+        let result;
+        if (btn === 'encrypt') {
+          result = await this.encryptText(data.chain);
+        } else if (btn === 'decrypt') {
+          result = await this.decryptText(data.chain);
+        }
+  
         outputMessage.classList.remove('active');
         copySection.classList.add('active');
-        copyParagraph.innerHTML = this.encrypt(data);
-      } else if (btn === 'decrypt') {
-        outputMessage.classList.remove('active');
-        copySection.classList.add('active');
-        copyParagraph.innerHTML = this.decrypt(data);
+        copyParagraph.innerHTML = result;
+      } catch (error) {
+        console.error('Error:', error);
+        
       }
     }
+    async encryptText(text) {
+      const response = await fetch('/api/encrypt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+      const data = await response.json();
+      return data.result;
+    }
   
+    async decryptText(text) {
+      const response = await fetch('/api/decrypt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+      const data = await response.json();
+      return data.result;
+    }
     handleCopy() {
       const text = this.shadowRoot.querySelector('.form-ouput__menssage p').textContent;
       navigator.clipboard.writeText(text).then(() => {
@@ -327,34 +355,7 @@ class EncriptadorMensaje extends HTMLElement {
       });
     }
   
-    encrypt(data) {
-      let word = data.chain.split(" ");
-    let convertion = word.map((value) => {
-      value = value.split('');
-      return value.map((caracter) => {
-        if (caracter === "e") return "enter";
-        else if (caracter === "i") return "imes";
-        else if (caracter === "a") return "ai";
-        else if (caracter === "o") return "ober";
-        else if (caracter === "u") return "ufat";
-        else return caracter;
-      }).join("");
-    }).join(" ");
-    return convertion;
-    }
-  
-    decrypt(data) {
-      let word = data.chain.split(" ");
-    let convertion = word.map((value) => {
-      value = value.replace(/enter/gi, "e");
-      value = value.replace(/imes/gi, "i");
-      value = value.replace(/ai/gi, "a");
-      value = value.replace(/ober/gi, "o");
-      value = value.replace(/ufat/gi, "u");
-      return value;
-    }).join(" ");
-    return convertion;
-    }
+   
   }
   
   customElements.define('encriptador-mensaje', EncriptadorMensaje);
