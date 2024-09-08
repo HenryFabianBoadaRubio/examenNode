@@ -6,7 +6,7 @@ const routes = require('./server/routes/route');
 
 const config = {
     port: process.env.EXPRESS_PORT || 3001,
-    host: process.env.EXPRESS_HOST || 'localhost',
+    host: process.env.EXPRESS_HOST || '0.0.0.0',
     static: process.env.EXPRESS_STATIC || 'public'
 };
 
@@ -33,6 +33,6 @@ app.use((err, req, res, next) => {
 });
 
 
-app.listen(config.port, config.host, () => {
-    console.log(`http://${config.host}:${config.port}`);
+app.listen(config.port, "0.0.0.0", () => {
+    console.log(`http://localhost:${config.port}`);
 });
